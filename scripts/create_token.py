@@ -136,7 +136,7 @@ async def _setup_onboarding(hass: HomeAssistant):
     # store_manager = get_internal_store_manager(hass)
     # store_manager.async_invalidate(STORAGE_KEY)
 
-
+# There is a BUG! Areas store is not save data.
 async def _create_default_areas(hass: HomeAssistant):
     """Create default areas with translations."""
     translations = await async_get_translations(
