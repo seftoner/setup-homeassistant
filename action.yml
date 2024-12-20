@@ -7,11 +7,9 @@ inputs:
   username:
     description: "Username for the admin user"
     required: false
-    default: "admin"
   password:
     description: "Password for the admin user"
     required: false
-    default: "admin123"
   tag:
     description: "The tag of Home Assistant to use"
     required: false
@@ -102,9 +100,9 @@ runs:
           -e PASSWORD="${{ inputs.password }}" \
           ghcr.io/home-assistant/amd64-homeassistant:${{ steps.init.outputs.tag }} \
           python3 /tmp/create_token.py)
-        echo "$OUTPUT" | jq -r '"token=\(.access_token)" >> $GITHUB_OUTPUT'
-        echo "$OUTPUT" | jq -r '"username=\(.username)" >> $GITHUB_OUTPUT'
-        echo "$OUTPUT" | jq -r '"password=\(.password)" >> $GITHUB_OUTPUT'
+        echo "token=$(echo "$OUTPUT" | jq -r .access_token)" >> $GITHUB_OUTPUT
+        echo "username=$(echo "$OUTPUT" | jq -r .username)" >> $GITHUB_OUTPUT
+        echo "password=$(echo "$OUTPUT" | jq -r .password)" >> $GITHUB_OUTPUT
 
     - shell: bash
       run: |
@@ -125,10 +123,14 @@ runs:
         set +e
         echo "Waiting for Home Assistant to start"
         while true; do
-          STATUS=$(curl -sSL -H "Authorization: Bearer ${{ steps.user.outputs.token }}" "$BASE_URL/api/config" | jq -r .state)
-          if [ "$STATUS" == "RUNNING" ]; then
-            break
-          elif [ "$RETRIES" == "${{inputs.retry-limit}}" ]; then
+          RESPONSE=$(curl -sSL -H "Authorization: Bearer ${{ steps.user.outputs.token }}" "${BASE_URL}/api/config")
+          if [ $? -eq 0 ] && echo "$RESPONSE" | jq -e . >/dev/null 2>&1; then
+            STATUS=$(echo "$RESPONSE" | jq -r .state)
+            if [ "$STATUS" == "RUNNING" ]; then
+              break
+            fi
+          fi
+          if [ "$RETRIES" == "${{inputs.retry-limit}}" ]; then
             echo "Failed to start"
             docker logs ${{ steps.init.outputs.containername }}
             exit 1
