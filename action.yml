@@ -95,11 +95,11 @@ runs:
         echo "Creating authentication"
         OUTPUT=$(docker run --rm \
           -v /tmp/combined_configuration:/config \
-          -v ${{ github.action_path }}/scripts/create_token.py:/tmp/create_token.py \
+          -v ${{ github.action_path }}/scripts/setup_ha.py:/tmp/setup_ha.py \
           -e USERNAME="${{ inputs.username }}" \
           -e PASSWORD="${{ inputs.password }}" \
           ghcr.io/home-assistant/amd64-homeassistant:${{ steps.init.outputs.tag }} \
-          python3 /tmp/create_token.py)
+          python3 /tmp/setup_ha.py)
         echo "token=$(echo "$OUTPUT" | jq -r .access_token)" >> $GITHUB_OUTPUT
         echo "username=$(echo "$OUTPUT" | jq -r .username)" >> $GITHUB_OUTPUT
         echo "password=$(echo "$OUTPUT" | jq -r .password)" >> $GITHUB_OUTPUT
